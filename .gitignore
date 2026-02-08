@@ -65,6 +65,7 @@ nul
 
 # Claude context (프로젝트 컨텍스트 문서)
 .claude/
+CLAUDE.md
 
 # Application properties with secrets
 **/application-local-dev.yml
