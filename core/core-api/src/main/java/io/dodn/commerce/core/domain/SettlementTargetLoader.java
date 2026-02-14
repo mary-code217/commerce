@@ -55,16 +55,16 @@ public class SettlementTargetLoader {
                     }
 
                     return new SettlementTargetEntity(
-                            settleDate,
                             mapping.getMerchantId(),
+                            settleDate,
+                            targetAmount,
                             transactionType,
                             transactionId,
                             item.getOrderId(),
                             item.getProductId(),
                             item.getQuantity(),
                             item.getUnitPrice(),
-                            item.getTotalPrice(),
-                            targetAmount
+                            item.getTotalPrice()
                     );
                 })
                 .collect(Collectors.toList());

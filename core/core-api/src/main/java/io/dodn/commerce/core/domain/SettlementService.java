@@ -38,6 +38,7 @@ public class SettlementService {
 
     public void loadTargets(LocalDate settleDate, LocalDateTime from, LocalDateTime to) {
         Pageable paymentPageable = PageRequest.of(0, 1000, Sort.by(Sort.Direction.ASC, "id"));
+        boolean hasNextPayment;
         do {
             var payments = paymentRepository.findAllByStateAndPaidAtBetween(PaymentState.SUCCESS, from, to, paymentPageable);
             try {
@@ -47,10 +48,12 @@ public class SettlementService {
                 log.error("[SETTLEMENT_LOAD_TARGETS] `결제` 거래건 정산 대상 생성 중 오류 발생 offset: {} size: {} page: {} error: {}",
                         paymentPageable.getOffset(), paymentPageable.getPageSize(), paymentPageable.getPageNumber(), e.getMessage(), e);
             }
+            hasNextPayment = payments.hasNext();
             paymentPageable = payments.nextPageable();
-        } while (payments.hasNext());
+        } while (hasNextPayment);
 
         Pageable cancelPageable = PageRequest.of(0, 1000, Sort.by(Sort.Direction.ASC, "id"));
+        boolean hasNextCancel;
         do {
             var cancels = cancelRepository.findAllByCanceledAtBetween(from, to, cancelPageable);
             try {
@@ -60,8 +63,9 @@ public class SettlementService {
                 log.error("[SETTLEMENT_LOAD_TARGETS] `취소` 거래건 정산 대상 생성 중 오류 발생 offset: {} size: {} page: {} error: {}",
                         cancelPageable.getOffset(), cancelPageable.getPageSize(), cancelPageable.getPageNumber(), e.getMessage(), e);
             }
+            hasNextCancel = cancels.hasNext();
             cancelPageable = cancels.nextPageable();
-        } while (cancels.hasNext());
+        } while (hasNextCancel);
     }
 
     @Transactional
