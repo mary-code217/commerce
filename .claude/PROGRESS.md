@@ -1,6 +1,6 @@
 # 변환 진행 상황
 
-## 현재 상태: 세션 5 완료 - core-api/domain Service 클래스 변환 완료
+## 현재 상태: 세션 6 완료 - core-api/controller + DTO 변환 완료
 
 ### 세션별 진행 현황
 
@@ -12,8 +12,55 @@
 | 3 | storage/db-core (Repository) | 완료 | 2025-02-10 | Repository 21개 변환 |
 | 4 | core-api/domain (모델 클래스) | 완료 | 2025-02-11 | 도메인 모델 27개 + support/error 4개 |
 | 5 | core-api/domain (Service) | 완료 | 2026-02-14 | Service 21개 + support 2개 (OffsetLimit, Page) |
-| 6 | core-api/controller + DTO | 대기 | - | |
+| 6 | core-api/controller + DTO | 완료 | 2026-02-18 | Request DTO 11개 + Response DTO 16개 + Controller 13개 + support/response 3개 |
 | 7 | Support + Config + Test + 빌드 | 대기 | - | |
+
+### 세션 6 상세 로그
+
+- [x] ApiResponse.java (support/response 선행 변환 - 제네릭 응답 래퍼)
+- [x] PageResponse.java (support/response 선행 변환 - 페이지 응답)
+- [x] ResultType.java (support/response 선행 변환 - SUCCESS/ERROR enum)
+- [x] AddCartItemRequest.java (수량 검증 + toAddCartItem)
+- [x] AddQuestionRequest.java (제목/내용 검증 + toContent)
+- [x] AddReviewRequest.java (평점/내용 검증 + toTarget/toContent - compareTo 변환)
+- [x] ApplyFavoriteRequest.java + ApplyFavoriteRequestType.java (enum 별도 파일)
+- [x] CancelRequest.java (toCancelAction)
+- [x] CreateOrderFromCartRequest.java (Set<Long> cartItemIds)
+- [x] CreateOrderRequest.java (toNewOrder - List.of 사용)
+- [x] CreatePaymentRequest.java (Nullable → 삼항 연산자 처리)
+- [x] ModifyCartItemRequest.java (toModifyCartItem)
+- [x] UpdateQuestionRequest.java (제목/내용 검증)
+- [x] UpdateReviewRequest.java (평점/내용 검증)
+- [x] ProductResponse.java (static of - Stream 변환)
+- [x] ProductDetailResponse.java (생성자에서 매핑 - companion object 제거)
+- [x] ProductSectionResponse.java (단순 DTO)
+- [x] OrderResponse.java (static of - items Stream 매핑)
+- [x] OrderListResponse.java (private static of + public static of(List))
+- [x] OrderItemResponse.java (단순 DTO)
+- [x] OrderCheckoutResponse.java (static of - Order+OwnedCoupon+PointBalance 조합)
+- [x] CreateOrderResponse.java (단순 DTO)
+- [x] CreatePaymentResponse.java (단순 DTO)
+- [x] CartResponse.java + CartItemResponse.java (static of - Product 중첩 접근)
+- [x] CouponResponse.java (static of + of(List) - Stream 변환)
+- [x] OwnedCouponResponse.java (static of - coupon 중첩 접근)
+- [x] FavoriteResponse.java (static of + of(List))
+- [x] PointResponse.java + PointHistoryResponse.java (static of - histories Stream 매핑)
+- [x] ReviewResponse.java (static of - target/content 중첩 접근)
+- [x] QnAResponse.java (static of - question/answer 중첩 접근)
+- [x] HealthController.java (ResponseEntity<?> health)
+- [x] ApiControllerAdvice.java (@RestControllerAdvice - when → switch, LogLevel → Level)
+- [x] ProductController.java (findProducts + findProduct)
+- [x] OrderController.java (5개 엔드포인트 - create/createFromCart/checkout/getOrders/getOrder)
+- [x] PaymentController.java (create + callback success/fail)
+- [x] CartController.java (CRUD 4개 엔드포인트)
+- [x] CouponController.java (download + getOwnedCoupons)
+- [x] ReviewController.java (CRUD 4개 엔드포인트)
+- [x] QnAController.java (CRUD 4개 엔드포인트)
+- [x] PointController.java (getPoint)
+- [x] FavoriteController.java (getFavorites + applyFavorite - when → switch)
+- [x] CancelController.java (cancel)
+- [x] SettlementBatchController.java (loadTargets + calculate + transfer - defaultValue SpEL)
+- [x] 빌드 확인 (BUILD SUCCESSFUL)
 
 ### 세션 5 상세 로그
 
@@ -157,12 +204,13 @@
 | Support (error) | 4 | 4 | 100% |
 | Service | 21 | 21 | 100% |
 | Support (OffsetLimit, Page) | 2 | 2 | 100% |
-| Controller | 13 | 0 | 0% |
-| DTO (Req/Res) | 27 | 0 | 0% |
-| Support (나머지) | 4 | 0 | 0% |
+| Controller | 13 | 13 | 100% |
+| DTO (Req/Res) | 27 | 29 | 100% |
+| Support (response) | 3 | 3 | 100% |
+| Support (나머지) | 1 | 0 | 0% |
 | Config (core-api) | 3 | 0 | 0% |
 | Test | 11 | 0 | 0% |
-| **전체** | **~170** | **116** | **68%** |
+| **전체** | **~170** | **161** | **95%** |
 
 ---
 
@@ -204,3 +252,12 @@
 - Kotlin do-while에서 `val`은 while 조건에서 접근 가능 → Java `var`는 do 블록 스코프로 제한 → boolean 플래그 분리
 - `@RequiredArgsConstructor`로 생성자 주입 (Kotlin 주 생성자 + val 필드와 동일한 효과)
 - support/OffsetLimit, Page를 세션 5에서 선행 변환 (Service 클래스 의존)
+- Request DTO: `@NoArgsConstructor` 추가 필요 (Jackson 역직렬화용)
+- Kotlin `companion object { fun of() }` → Java `public static` 메서드
+- Kotlin `data class` DTO → `@Getter @AllArgsConstructor` (Response) / `@Getter @NoArgsConstructor @AllArgsConstructor` (Request)
+- Kotlin `data class` 내 enum → Java에서는 별도 파일로 분리 (ApplyFavoriteRequestType)
+- Kotlin `when (logLevel)` → Java `switch (level)` (enhanced switch 사용)
+- ApiResponse: Kotlin `private constructor` + `companion object` → Java `private` 생성자 + `static` 팩토리 메서드
+- ApiResponse에서 Kotlin `Any` → Java `Object` 타입
+- Kotlin default parameter `@RequestParam targetDate: LocalDate = LocalDate.now()` → Java `@RequestParam(defaultValue = "#{T(java.time.LocalDate).now()}")` SpEL
+- support/response (ApiResponse, PageResponse, ResultType)를 세션 6에서 선행 변환 (Controller 의존)
